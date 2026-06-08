@@ -17,6 +17,6 @@ A comprehensive Emergency Blood Bank Management System developed as a university
 - index.html: The core web layout file rendering the visual command center and menu navigation.
 
 ## Contributors
-- Muhammad Bilal Zakuta - Artificial Intelligence Student
+- Muhammad Bilal - Artificial Intelligence Student
 - Saifullah Khan - Artificial Intelligence Student
 -https://donerdeck.netlify.app/
