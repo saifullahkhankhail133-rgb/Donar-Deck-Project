@@ -1,0 +1,1791 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DonorDeck - Blood Bank Management System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-dark: #0a0811;
+            --sidebar-bg: #100f1a;
+            --card-bg: #181724;
+            --text-main: #f0f0f5;
+            --text-muted: #8b8b9e;
+            --primary-red: #e62534;
+            --primary-red-glow: rgba(230, 37, 52, 0.4);
+            --green-online: #23a559;
+            --border-color: #2a2838;
+            --hover-bg: #222030;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            overflow: hidden;
+            display: flex;
+            height: 100vh;
+        }
+
+        #particle-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            background: radial-gradient(circle at center, #1a080a 0%, #080509 100%);
+        }
+
+        .app-container {
+            display: flex;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: rgba(16, 15, 26, 0.8);
+            backdrop-filter: blur(15px);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 25px 0;
+            overflow-y: auto;
+            z-index: 10;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            padding: 0 25px;
+            margin-bottom: 15px;
+        }
+
+        .blood-drop-logo {
+            color: var(--primary-red);
+            font-size: 28px;
+            animation: pump 1.5s infinite ease-in-out;
+            filter: drop-shadow(0 0 10px var(--primary-red));
+            background: rgba(230, 37, 52, 0.15);
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 10px;
+        }
+
+        @keyframes pump {
+
+            0%,
+            100% {
+                transform: scale(1);
+                filter: drop-shadow(0 0 8px var(--primary-red));
+            }
+
+            50% {
+                transform: scale(1.1);
+                filter: drop-shadow(0 0 16px var(--primary-red));
+            }
+        }
+
+        .brand h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 24px;
+            font-weight: 800;
+            margin-left: 12px;
+            letter-spacing: 0.5px;
+            color: #ffffff;
+        }
+
+        .system-status {
+            background: rgba(35, 165, 89, 0.1);
+            color: var(--green-online);
+            border: 1px solid rgba(35, 165, 89, 0.2);
+            border-radius: 20px;
+            padding: 6px 15px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            margin: 0 25px 25px 25px;
+            display: inline-flex;
+            align-items: center;
+            letter-spacing: 1px;
+        }
+
+        .system-status::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: var(--green-online);
+            border-radius: 50%;
+            margin-right: 8px;
+            box-shadow: 0 0 8px var(--green-online);
+            animation: pulse-green 2s infinite;
+        }
+
+        @keyframes pulse-green {
+            0% {
+                opacity: 0.5;
+            }
+
+            50% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0.5;
+            }
+        }
+
+        .nav-group {
+            margin-bottom: 20px;
+        }
+
+        .nav-title {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin: 0 25px 10px 25px;
+            font-weight: 700;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 10px 25px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s;
+            cursor: pointer;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-link i {
+            width: 20px;
+            text-align: center;
+            margin-right: 12px;
+            font-size: 1.1rem;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--text-main);
+        }
+
+        .nav-link.active {
+            background: rgba(230, 37, 52, 0.1);
+            color: var(--text-main);
+            border-left: 3px solid var(--primary-red);
+        }
+
+        .nav-badge {
+            background: var(--primary-red);
+            color: white;
+            font-size: 0.65rem;
+            font-weight: 800;
+            padding: 2px 7px;
+            border-radius: 10px;
+            margin-left: auto;
+            box-shadow: 0 0 8px var(--primary-red-glow);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            z-index: 10;
+            overflow-y: auto;
+        }
+
+        .main-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .main-content::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+
+        .top-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 30px 50px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            background: linear-gradient(180deg, rgba(16, 15, 26, 0.95) 0%, rgba(16, 15, 26, 0.4) 100%);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 20;
+        }
+
+        .header-titles h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 26px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
+        .header-titles p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 5px;
+            font-weight: 500;
+        }
+
+        .header-stats {
+            display: flex;
+            gap: 15px;
+        }
+
+        .stat-badge {
+            background: rgba(24, 23, 36, 0.8);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-badge i {
+            color: var(--primary-red);
+        }
+
+        .stat-badge span.count {
+            color: var(--text-main);
+            font-weight: 800;
+            font-size: 0.9rem;
+        }
+
+        .stat-badge .type-icon {
+            color: #20c997;
+        }
+
+        .views-container {
+            padding: 40px 50px;
+            flex: 1;
+            animation: fadeIn 0.4s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Dashboard Specific */
+        .dash-banner {
+            background: linear-gradient(135deg, rgba(230, 37, 52, 0.1) 0%, rgba(24, 23, 36, 0.6) 100%);
+            border: 1px solid rgba(230, 37, 52, 0.2);
+            border-radius: 16px;
+            padding: 40px 50px;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .dash-banner::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -5%;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(230, 37, 52, 0.15) 0%, transparent 70%);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .dash-banner * {
+            position: relative;
+            z-index: 1;
+        }
+
+        .banner-badge {
+            color: var(--primary-red);
+            font-size: 0.7rem;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            margin-bottom: 20px;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .banner-badge i {
+            margin-right: 8px;
+            font-size: 0.5rem;
+            animation: pulse-red 1.5s infinite;
+        }
+
+        @keyframes pulse-red {
+            0% {
+                opacity: 0.3;
+                transform: scale(0.8);
+            }
+
+            50% {
+                opacity: 1;
+                transform: scale(1.2);
+            }
+
+            100% {
+                opacity: 0.3;
+                transform: scale(0.8);
+            }
+        }
+
+        .dash-banner h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 5px;
+            letter-spacing: 1px;
+            text-shadow: 0 0 20px var(--primary-red-glow);
+        }
+
+        .dash-banner h3 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.8rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            margin-bottom: 20px;
+        }
+
+        .dash-banner p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            max-width: 550px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .banner-footer {
+            display: flex;
+            align-items: center;
+            color: var(--primary-red);
+            font-size: 0.85rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+        }
+
+        .banner-footer::before,
+        .banner-footer::after {
+            content: '';
+            height: 1px;
+            width: 50px;
+            background: var(--primary-red);
+            margin: 0 15px;
+            opacity: 0.5;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(24, 23, 36, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 25px 20px;
+            text-align: center;
+            transition: transform 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .stat-card-icon {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            display: inline-block;
+        }
+
+        .stat-card .val {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 5px;
+            line-height: 1;
+        }
+
+        .stat-card .lbl {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+        }
+
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .action-btn {
+            background: rgba(24, 23, 36, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: all 0.3s;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-decoration: none;
+        }
+
+        .action-btn i {
+            font-size: 1.5rem;
+            margin-bottom: 12px;
+            transition: color 0.3s;
+        }
+
+        .action-btn:hover {
+            background: var(--hover-bg);
+            color: var(--text-main);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .action-btn:hover i {
+            color: var(--primary-red);
+            filter: drop-shadow(0 0 5px var(--primary-red));
+        }
+
+        .bottom-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .dash-widget {
+            background: rgba(24, 23, 36, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            min-height: 250px;
+        }
+
+        .widget-header {
+            padding: 20px 25px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .widget-header h4 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .widget-header h4 i {
+            color: var(--primary-red);
+        }
+
+        .view-all {
+            color: var(--primary-red);
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: opacity 0.3s;
+            cursor: pointer;
+        }
+
+        .view-all:hover {
+            opacity: 0.8;
+        }
+
+        .widget-body {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: rgba(139, 139, 158, 0.5);
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .widget-body i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        .widget-body p {
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .list-item {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: var(--text-main);
+            font-size: 0.9rem;
+        }
+
+        /* Form Styles */
+        .form-card {
+            background: rgba(24, 23, 36, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 35px;
+            max-width: 800px;
+            margin-bottom: 30px;
+        }
+
+        .form-header {
+            margin-bottom: 30px;
+        }
+
+        .form-header h3 {
+            display: flex;
+            align-items: center;
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.3rem;
+        }
+
+        .form-header h3 i {
+            color: var(--primary-red);
+            margin-right: 12px;
+        }
+
+        .form-header p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-top: 12px;
+            line-height: 1.6;
+        }
+
+        .form-header p span {
+            color: var(--primary-red);
+            font-weight: 700;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group.full-width {
+            grid-column: span 2;
+        }
+
+        .form-group label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-weight: 700;
+            margin-bottom: 10px;
+            letter-spacing: 0.5px;
+        }
+
+        .form-control {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 14px 16px;
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            transition: all 0.3s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: rgba(230, 37, 52, 0.5);
+            box-shadow: 0 0 10px rgba(230, 37, 52, 0.1);
+        }
+
+        .form-control::placeholder {
+            color: rgba(139, 139, 158, 0.5);
+        }
+
+        select.form-control {
+            appearance: none;
+            background-image: url('data:image/svg+xml;utf8,<svg fill="%238b8b9e" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>');
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            cursor: pointer;
+        }
+
+        select.form-control option {
+            background: var(--card-bg);
+        }
+
+        .btn-submit {
+            background: rgba(230, 37, 52, 0.1);
+            border: 1px solid var(--primary-red);
+            color: var(--primary-red);
+            padding: 14px 28px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 30px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 0 15px rgba(230, 37, 52, 0.1);
+        }
+
+        .btn-submit:hover {
+            background: var(--primary-red);
+            color: white;
+            box-shadow: 0 0 20px rgba(230, 37, 52, 0.4);
+        }
+
+        /* Tables */
+        .table-responsive {
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.2);
+            width: 100%;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        .data-table th,
+        .data-table td {
+            border-bottom: 1px solid var(--border-color);
+            padding: 14px 20px;
+            text-align: left;
+        }
+
+        .data-table th {
+            background: rgba(24, 23, 36, 0.9);
+            color: var(--text-muted);
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+        }
+
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .data-table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        /* Settings */
+        .settings-section {
+            margin-bottom: 40px;
+        }
+
+        .settings-section-title {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-weight: 700;
+            margin-bottom: 15px;
+            letter-spacing: 1px;
+        }
+
+        .alert-box {
+            background: rgba(35, 165, 89, 0.1);
+            border: 1px solid rgba(35, 165, 89, 0.3);
+            border-radius: 8px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .alert-box i {
+            font-size: 1.8rem;
+            color: var(--green-online);
+        }
+
+        .alert-box h4 {
+            color: var(--green-online);
+            margin-bottom: 5px;
+            font-size: 1.05rem;
+        }
+
+        .danger-zone {
+            background: rgba(230, 37, 52, 0.05);
+            border: 1px solid rgba(230, 37, 52, 0.2);
+            border-radius: 8px;
+            padding: 25px;
+        }
+
+        .danger-zone-title {
+            color: #f39c12;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            font-weight: 700;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-danger {
+            background: rgba(230, 37, 52, 0.1);
+            border: 1px solid var(--primary-red);
+            color: var(--primary-red);
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-danger:hover {
+            background: var(--primary-red);
+            color: white;
+            box-shadow: 0 0 15px rgba(230, 37, 52, 0.4);
+        }
+
+        .stock-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
+
+        .stock-card {
+            background: rgba(24, 23, 36, 0.7);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stock-card .b-type {
+            color: var(--primary-red);
+            font-size: 2rem;
+            font-weight: 800;
+            font-family: 'Outfit';
+            margin-bottom: 10px;
+        }
+
+        .stock-card .b-qty {
+            color: var(--text-main);
+            font-size: 1.2rem;
+        }
+
+        .stock-card .b-qty span {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+
+        /* Compatibility engine table specifics */
+        .compatibility-matrix th,
+        .compatibility-matrix td {
+            text-align: center;
+            border-right: 1px solid var(--border-color);
+        }
+
+        .compatibility-matrix th:first-child,
+        .compatibility-matrix td:first-child {
+            text-align: left;
+        }
+
+        .compatibility-matrix th:last-child,
+        .compatibility-matrix td:last-child {
+            border-right: none;
+        }
+
+        .comp-check {
+            color: var(--green-online);
+            font-size: 1.1rem;
+        }
+
+        /* Urgency levels */
+        .urgency-1 {
+            color: #3498db;
+            border: 1px solid #3498db;
+            background: rgba(52, 152, 219, 0.1);
+        }
+
+        .urgency-2 {
+            color: #2ecc71;
+            border: 1px solid #2ecc71;
+            background: rgba(46, 204, 113, 0.1);
+        }
+
+        .urgency-3 {
+            color: #f1c40f;
+            border: 1px solid #f1c40f;
+            background: rgba(241, 196, 15, 0.1);
+        }
+
+        .urgency-4 {
+            color: #e74c3c;
+            border: 1px solid #e74c3c;
+            background: rgba(231, 76, 60, 0.1);
+        }
+
+        .urgency-5 {
+            color: #8b0000;
+            border: 1px solid #8b0000;
+            background: rgba(139, 0, 0, 0.2);
+            animation: blink-dark-red 1s infinite;
+        }
+
+        @keyframes blink-dark-red {
+
+            0%,
+            100% {
+                opacity: 1;
+                box-shadow: 0 0 15px rgba(139, 0, 0, 0.8);
+            }
+
+            50% {
+                opacity: 0.5;
+                box-shadow: none;
+            }
+        }
+
+        /* Slider styling */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: var(--primary-red);
+            cursor: pointer;
+            margin-top: -8px;
+            box-shadow: 0 0 10px rgba(230, 37, 52, 0.5);
+        }
+
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="particle-canvas"></canvas>
+
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="blood-drop-logo"><i class="fas fa-tint"></i></div>
+                <h2>DonorDeck</h2>
+            </div>
+
+            <div class="system-status">SYSTEM ONLINE</div>
+
+            <div class="nav-group">
+                <div class="nav-title">Overview</div>
+                <a class="nav-link active"
+                    onclick="Router.navigate('dashboard', 'DASHBOARD', 'Emergency blood bank overview')">
+                    <i class="fas fa-square"></i> Dashboard
+                </a>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-title">Donors</div>
+                <a class="nav-link" onclick="Router.navigate('add-donor', 'ADD DONOR', 'Register a new blood donor')">
+                    <i class="fas fa-plus"></i> Add Donor
+                </a>
+                <a class="nav-link" onclick="Router.navigate('all-donors', 'ALL DONORS', 'View registered donors')">
+                    <i class="fas fa-user-friends"></i> All Donors <span class="nav-badge" id="badge-donors">0</span>
+                </a>
+                <a class="nav-link" onclick="Router.navigate('search-donor', 'SEARCH DONOR', 'Find donor by details')">
+                    <i class="fas fa-search"></i> Search Donor
+                </a>
+                <a class="nav-link"
+                    onclick="Router.navigate('update-donor', 'UPDATE DONOR', 'Modify donor information')">
+                    <i class="fas fa-pen"></i> Update Donor
+                </a>
+                <a class="nav-link"
+                    onclick="Router.navigate('delete-donor', 'DELETE DONOR', 'Remove a donor from registry')">
+                    <i class="fas fa-trash"></i> Delete Donor
+                </a>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-title">Recipients</div>
+                <a class="nav-link"
+                    onclick="Router.navigate('add-recipient', 'ADD RECIPIENT', 'Register a new recipient')">
+                    <i class="fas fa-plus"></i> Add Recipient
+                </a>
+                <a class="nav-link"
+                    onclick="Router.navigate('all-recipients', 'ALL RECIPIENTS', 'View all recipients')">
+                    <i class="fas fa-clipboard-list"></i> All Recipients <span class="nav-badge"
+                        id="badge-recipients">0</span>
+                </a>
+                <a class="nav-link"
+                    onclick="Router.navigate('search-recipient', 'SEARCH RECIPIENT', 'Find recipient details')">
+                    <i class="fas fa-search"></i> Search Recipient
+                </a>
+                <a class="nav-link"
+                    onclick="Router.navigate('update-recipient', 'UPDATE RECIPIENT', 'Modify recipient information')">
+                    <i class="fas fa-pen"></i> Update Recipient
+                </a>
+                <a class="nav-link"
+                    onclick="Router.navigate('delete-recipient', 'DELETE RECIPIENT', 'Remove a recipient')">
+                    <i class="fas fa-trash"></i> Delete Recipient
+                </a>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-title">Blood Inventory</div>
+                <a class="nav-link"
+                    onclick="Router.navigate('request-blood', 'REQUEST BLOOD', 'Process a blood request')">
+                    <i class="fas fa-tint"></i> Request Blood
+                </a>
+                <a class="nav-link" onclick="Router.navigate('view-stock', 'BLOOD STOCK', 'View real-time inventory')">
+                    <i class="fas fa-box"></i> View Stock
+                </a>
+                <a class="nav-link"
+                    onclick="Router.navigate('search-blood', 'SEARCH INVENTORY', 'Find specific blood types')">
+                    <i class="fas fa-search"></i> Search Blood
+                </a>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-title">Intelligence</div>
+                <a class="nav-link"
+                    onclick="Router.navigate('compatibility', 'COMPATIBILITY ENGINE', 'Blood type compatibility check')">
+                    <i class="fas fa-microscope"></i> Compatibility
+                </a>
+                <a class="nav-link"
+                    onclick="Router.navigate('transactions', 'TRANSACTIONS', 'View system transactions')">
+                    <i class="fas fa-file-invoice"></i> Transactions <span class="nav-badge"
+                        id="badge-transactions">0</span>
+                </a>
+                <a class="nav-link"
+                    onclick="Router.navigate('settings', 'SETTINGS', 'System configuration & data management')">
+                    <i class="fas fa-cog"></i> Settings
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <div style="background: rgba(230, 37, 52, 0.15); border-bottom: 1px solid rgba(230, 37, 52, 0.3); color: var(--text-main); text-align: center; padding: 10px; font-size: 0.85rem; font-weight: 600;">
+                ⚠️ DEMO MODE - All data is saved only in your browser (localStorage). It will not appear on other devices.
+            </div>
+            <header class="top-header">
+                <div class="header-titles">
+                    <h1 id="page-title">DASHBOARD</h1>
+                    <p id="page-subtitle">Emergency blood bank overview</p>
+                </div>
+                <div class="header-stats">
+                    <div class="stat-badge">
+                        <i class="fas fa-tint"></i> DONORS <span class="count" id="header-donors">0</span>
+                    </div>
+                    <div class="stat-badge">
+                        <i class="fas fa-bed"></i> RECIPIENTS <span class="count" id="header-recipients">0</span>
+                    </div>
+                    <div class="stat-badge">
+                        <i class="fas fa-vial type-icon"></i> BLOOD TYPES <span class="count"
+                            id="header-blood-types">0</span>
+                    </div>
+                </div>
+            </header>
+
+            <div class="views-container" id="app-views">
+                <!-- Dynamically rendered content goes here -->
+            </div>
+        </main>
+    </div>
+
+    <script>
+        window.onerror = function (msg, url, line, col, error) {
+            document.body.innerHTML = '<div style="padding:50px;color:red;z-index:9999;position:relative;"><h1>JS Error</h1><p>' + msg + '</p><p>Line: ' + line + ', Col: ' + col + '</p><pre>' + (error && error.stack) + '</pre></div>';
+        };
+
+        // === Core State Management ===
+        let defaultAppState = { donors: [], recipients: [], transactions: [] };
+
+        function updateUrgencyUI(val) {
+            const el = document.getElementById('urgency-badge');
+            if (!el) return;
+            const labels = ['1 — Low', '2 — Moderate', '3 — Important', '4 — High', '5 — Critical'];
+            el.className = 'urgency-' + val;
+            el.textContent = labels[val - 1];
+        }
+
+        function safeParse(key) {
+            try {
+                let data = localStorage.getItem(key);
+                return data ? JSON.parse(data) : [];
+            } catch (e) {
+                return [];
+            }
+        }
+
+        const AppState = {
+            donors: safeParse('donorDeck_donors'),
+            recipients: safeParse('donorDeck_recipients'),
+            transactions: safeParse('donorDeck_transactions'),
+
+            save: function () {
+                localStorage.setItem('donorDeck_donors', JSON.stringify(this.donors));
+                localStorage.setItem('donorDeck_recipients', JSON.stringify(this.recipients));
+                localStorage.setItem('donorDeck_transactions', JSON.stringify(this.transactions));
+                updateUIStats();
+            },
+
+            deleteAll: function () {
+                this.donors = [];
+                this.recipients = [];
+                this.transactions = [];
+                this.save();
+                const btn = document.querySelector('.btn-danger');
+                if (btn) {
+                    btn.innerHTML = '<i class="fas fa-check"></i> Data Deleted';
+                    setTimeout(() => btn.innerHTML = '<i class="fas fa-trash"></i> Delete All Data', 3000);
+                }
+            },
+
+            getStock: function () {
+                let stock = { 'A+': 0, 'A-': 0, 'B+': 0, 'B-': 0, 'AB+': 0, 'AB-': 0, 'O+': 0, 'O-': 0 };
+                this.donors.forEach(function (d) { if (stock[d.blood] !== undefined) { stock[d.blood] += Number(d.quantity); } });
+                this.transactions.forEach(function (t) {
+                    if (t.type === 'Request' && stock[t.blood] !== undefined) { stock[t.blood] -= Number(t.quantity); }
+                });
+                return stock;
+            }
+        };
+
+        function updateUIStats() {
+            const stock = AppState.getStock();
+            let activeTypes = 0;
+            for (let type in stock) { if (stock[type] > 0) activeTypes++; }
+
+            const dCount = AppState.donors.length || 0;
+            const rCount = AppState.recipients.length || 0;
+            const tCount = AppState.transactions.length || 0;
+
+            document.getElementById('badge-donors').textContent = dCount;
+            document.getElementById('header-donors').textContent = dCount;
+
+            document.getElementById('badge-recipients').textContent = rCount;
+            document.getElementById('header-recipients').textContent = rCount;
+
+            document.getElementById('badge-transactions').textContent = tCount;
+            document.getElementById('header-blood-types').textContent = activeTypes;
+        }
+
+        // === View Templates ===
+        const Views = {
+            'dashboard': function () {
+                const stock = AppState.getStock();
+                let activeTypes = 0;
+                for (let t in stock) { if (stock[t] > 0) activeTypes++; }
+
+                let donorList = '';
+                if (AppState.donors.length === 0) {
+                    donorList = '<i class="fas fa-user"></i><p>No donors yet</p>';
+                } else {
+                    let recentDonors = AppState.donors.slice(-4).reverse();
+                    donorList = recentDonors.map(function (d) {
+                        return '<div class="list-item"><span>' + d.name + '</span> <span style="color:var(--primary-red); font-weight:bold;">' + d.blood + '</span></div>';
+                    }).join('');
+                }
+
+                let emergencies = AppState.recipients.filter(function (r) { return r.urgency >= 4; });
+                let recList = '';
+                if (emergencies.length === 0) {
+                    recList = '<i class="fas fa-check-square"></i><p>No emergency cases</p>';
+                } else {
+                    recList = emergencies.map(function (r) {
+                        return '<div class="list-item"><span>' + r.name + ' (' + r.age + ' yrs)</span> <span style="color:var(--primary-red); font-weight:bold;">Urgency: ' + r.urgency + '</span></div>';
+                    }).join('');
+                }
+
+                return '<div class="dash-banner">' +
+                    '<div class="banner-badge"><i class="fas fa-circle"></i> LIVE EMERGENCY SYSTEM</div>' +
+                    '<h2 style="color: #ffffff; text-shadow: 0 0 15px rgba(255,255,255,0.7), 0 0 25px rgba(255,255,255,0.4); font-size: 4rem;">DonorDeck</h2>' +
+                    '<h3>Intelligent Blood Bank System</h3>' +
+                    '<p style="font-size:1.05rem;">Production-grade OOP blood bank — real-time donor registry, inventory management, compatibility engine & emergency case tracking.</p>' +
+                    '<div class="banner-footer" style="margin-top:10px;">EVERY DROP MATTERS</div>' +
+                    '</div>' +
+                    '<div class="stats-grid">' +
+                    '<div class="stat-card"><i class="fas fa-user-friends stat-card-icon" style="color:#3498db"></i><div class="val">' + AppState.donors.length + '</div><div class="lbl">TOTAL DONORS</div></div>' +
+                    '<div class="stat-card"><i class="fas fa-hospital stat-card-icon" style="color:#e74c3c"></i><div class="val">' + AppState.recipients.length + '</div><div class="lbl">TOTAL RECIPIENTS</div></div>' +
+                    '<div class="stat-card"><i class="fas fa-box stat-card-icon" style="color:#f39c12"></i><div class="val">' + activeTypes + '</div><div class="lbl">BLOOD GROUPS IN STOCK</div></div>' +
+                    '<div class="stat-card"><i class="fas fa-ambulance stat-card-icon" style="color:var(--primary-red)"></i><div class="val" style="color:var(--primary-red)">' + emergencies.length + '</div><div class="lbl">EMERGENCY CASES</div></div>' +
+                    '</div>' +
+                    '<div class="actions-grid">' +
+                    '<a href="#" class="action-btn" onclick="Router.navigate(\'add-donor\', \'ADD DONOR\', \'Register a new blood donor\')"><i class="fas fa-tint"></i> Add Donor</a>' +
+                    '<a href="#" class="action-btn" onclick="Router.navigate(\'add-recipient\', \'ADD RECIPIENT\', \'Register a new recipient\')"><i class="fas fa-hospital"></i> Add Recipient</a>' +
+                    '<a href="#" class="action-btn" onclick="Router.navigate(\'request-blood\', \'REQUEST BLOOD\', \'Process a blood request\')"><i class="fas fa-syringe"></i> Request Blood</a>' +
+                    '<a href="#" class="action-btn" onclick="Router.navigate(\'view-stock\', \'BLOOD STOCK\', \'View real-time inventory\')"><i class="fas fa-box"></i> View Stock</a>' +
+                    '</div>' +
+                    '<div class="bottom-grid">' +
+                    '<div class="dash-widget">' +
+                    '<div class="widget-header"><h4><i class="fas fa-tint"></i> Recent Donors</h4><a class="view-all" onclick="Router.navigate(\'all-donors\', \'ALL DONORS\', \'View registered donors\')">View All →</a></div>' +
+                    '<div class="widget-body" style="padding:10px;">' + donorList + '</div>' +
+                    '</div>' +
+                    '<div class="dash-widget">' +
+                    '<div class="widget-header"><h4><i class="fas fa-ambulance"></i> Emergency Recipients (Urgency 4-5)</h4></div>' +
+                    '<div class="widget-body" style="padding:10px;">' + recList + '</div>' +
+                    '</div>' +
+                    '</div>';
+            },
+
+            // --- Donors ---
+            'add-donor': function () {
+                return '<div class="form-card">' +
+                    '<div class="form-header"><h3><i class="fas fa-tint"></i> Register New Donor</h3><p>Donor\'s blood quantity is <span>automatically added to stock</span> upon registration.</p></div>' +
+                    '<form id="frm-add-donor" onsubmit="FormHandlers.addDonor(event)">' +
+                    '<div class="form-grid">' +
+                    '<div class="form-group"><label>FULL NAME</label><input type="text" class="form-control" id="d-name" required></div>' +
+                    '<div class="form-group"><label>AGE (18-60)</label><input type="number" class="form-control" id="d-age" min="18" max="60" required></div>' +
+                    '<div class="form-group"><label>CONTACT</label><input type="text" class="form-control" id="d-contact" required></div>' +
+                    '<div class="form-group"><label>BLOOD GROUP</label><select class="form-control" id="d-blood" required><option value="">-- Select --</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select></div>' +
+                    '<div class="form-group full-width"><label>DONATION QUANTITY (ML)</label><input type="number" class="form-control" id="d-qty" min="350" required></div>' +
+                    '</div>' +
+                    '<button type="submit" class="btn-submit"><i class="fas fa-tint"></i> Register Donor</button>' +
+                    '</form></div>';
+            },
+            'all-donors': function () {
+                let rows = AppState.donors.length === 0 ? '<tr><td colspan="5" style="text-align:center">No donors found</td></tr>' :
+                    AppState.donors.map(function (d) { return '<tr><td>' + d.name + '</td><td>' + d.age + '</td><td>' + d.contact + '</td><td style="color:var(--primary-red);font-weight:bold">' + d.blood + '</td><td>' + d.quantity + '</td></tr>'; }).join('');
+                return '<div class="form-card" style="max-width:100%">' +
+                    '<div class="form-header"><h3><i class="fas fa-user-friends"></i> All Registered Donors</h3></div>' +
+                    '<div class="table-responsive"><table class="data-table"><thead><tr><th>Name</th><th>Age</th><th>Contact</th><th>Blood Group</th><th>Quantity (ml)</th></tr></thead>' +
+                    '<tbody>' + rows + '</tbody></table></div></div>';
+            },
+            'search-donor': function () {
+                return '<div class="form-card"><div class="form-header"><h3><i class="fas fa-search"></i> Search Donor</h3></div>' +
+                    '<div class="form-group" style="margin-bottom:20px;"><input type="text" class="form-control" id="search-d-input" placeholder="Type name or blood group..." onkeyup="FormHandlers.searchDonor()"></div>' +
+                    '<div class="table-responsive"><table class="data-table" id="search-d-results"><thead><tr><th>Name</th><th>Contact</th><th>Blood Group</th></tr></thead><tbody></tbody></table></div></div>';
+            },
+            'update-donor': function () {
+                return '<div class="form-card" style="max-width: 600px;"><div class="form-header"><h3><i class="fas fa-pen"></i> Update Donor</h3></div>' +
+                    '<div class="form-group"><label>FIND DONOR</label><div style="display:flex; gap:10px;"><input type="text" class="form-control" id="ud-search" placeholder="Enter exact donor name..." style="flex:1;"><button class="btn-submit" style="margin-top:0;" onclick="FormHandlers.findUpdateDonor()">Find</button></div></div>' +
+                    '<div id="ud-error" style="color:var(--primary-red); margin-top:10px; display:none;">Donor not found.</div>' +
+                    '<div id="ud-form-container" style="display:none; margin-top:30px; border-top:1px solid var(--border-color); padding-top:30px;"></div></div>';
+            },
+            'delete-donor': function () {
+                return '<div class="form-card" style="max-width: 600px;"><div class="form-header"><h3><i class="fas fa-trash"></i> Delete Donor</h3></div>' +
+                    '<div class="form-group"><label>FIND DONOR TO DELETE</label><div style="display:flex; gap:10px;"><input type="text" class="form-control" id="del-d-search" placeholder="Enter exact donor name..." style="flex:1;"><button class="btn-submit" style="margin-top:0;" onclick="FormHandlers.findDeleteDonor()">Find</button></div></div>' +
+                    '<div id="del-d-error" style="color:var(--primary-red); margin-top:10px; display:none;">Donor not found.</div>' +
+                    '<div id="del-d-container" style="display:none; margin-top:30px; border-top:1px solid var(--border-color); padding-top:30px;"></div></div>';
+            },
+
+            // --- Recipients ---
+            'add-recipient': function () {
+                return '<div class="form-card"><div class="form-header"><h3><i class="fas fa-plus"></i> Register Recipient</h3></div>' +
+                    '<form id="frm-add-recipient" onsubmit="FormHandlers.addRecipient(event)"><div class="form-grid">' +
+                    '<div class="form-group"><label>FULL NAME</label><input type="text" class="form-control" id="r-name" required></div>' +
+                    '<div class="form-group"><label>AGE</label><input type="number" class="form-control" id="r-age" required></div>' +
+                    '<div class="form-group"><label>CONTACT</label><input type="text" class="form-control" id="r-contact" required></div>' +
+                    '<div class="form-group"><label>BLOOD GROUP REQUIRED</label><select class="form-control" id="r-blood" required><option value="">-- Select --</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select></div>' +
+                    '<div class="form-group full-width" style="margin-top:10px;"><label>URGENCY LEVEL</label>' +
+                    '<div style="display:flex; align-items:center; gap:20px;">' +
+                    '<input type="range" class="form-control" id="r-urgency" min="1" max="5" value="1" oninput="updateUrgencyUI(this.value)" style="flex:1; padding:0; border:none; background:transparent;">' +
+                    '<div id="urgency-badge" style="padding:8px 15px; border-radius:20px; font-weight:bold; font-size:0.9rem; min-width:130px; text-align:center;" class="urgency-1">1 — Low</div>' +
+                    '</div></div>' +
+                    '</div><button type="submit" class="btn-submit"><i class="fas fa-bed"></i> Register Recipient</button></form></div>';
+            },
+            'all-recipients': function () {
+                let rows = AppState.recipients.length === 0 ? '<tr><td colspan="5" style="text-align:center">No recipients found</td></tr>' :
+                    AppState.recipients.map(function (r) { return '<tr><td>' + r.name + '</td><td>' + r.age + '</td><td>' + (r.contact || '-') + '</td><td style="color:var(--primary-red);font-weight:bold">' + r.blood + '</td><td>' + r.urgency + '</td></tr>'; }).join('');
+                return '<div class="form-card" style="max-width:100%"><div class="form-header"><h3><i class="fas fa-clipboard-list"></i> All Recipients</h3></div>' +
+                    '<div class="table-responsive"><table class="data-table"><thead><tr><th>Name</th><th>Age</th><th>Contact</th><th>Req Blood</th><th>Urgency</th></tr></thead>' +
+                    '<tbody>' + rows + '</tbody></table></div></div>';
+            },
+            'search-recipient': function () {
+                return '<div class="form-card"><div class="form-header"><h3><i class="fas fa-search"></i> Search Recipient</h3></div>' +
+                    '<div class="form-group" style="margin-bottom:20px;"><input type="text" class="form-control" id="search-r-input" placeholder="Type name..." onkeyup="FormHandlers.searchRecipient()"></div>' +
+                    '<div class="table-responsive"><table class="data-table" id="search-r-results"><thead><tr><th>Name</th><th>Age</th><th>Contact</th><th>Blood</th></tr></thead><tbody></tbody></table></div></div>';
+            },
+            'update-recipient': function () {
+                return '<div class="form-card" style="max-width: 600px;"><div class="form-header"><h3><i class="fas fa-pen"></i> Update Recipient</h3></div>' +
+                    '<div class="form-group"><label>FIND RECIPIENT</label><div style="display:flex; gap:10px;"><input type="text" class="form-control" id="ur-search" placeholder="Enter exact name..." style="flex:1;"><button class="btn-submit" style="margin-top:0;" onclick="FormHandlers.findUpdateRecipient()">Find</button></div></div>' +
+                    '<div id="ur-error" style="color:var(--primary-red); margin-top:10px; display:none;">Recipient not found.</div>' +
+                    '<div id="ur-form-container" style="display:none; margin-top:30px; border-top:1px solid var(--border-color); padding-top:30px;"></div></div>';
+            },
+            'delete-recipient': function () {
+                return '<div class="form-card" style="max-width: 600px;"><div class="form-header"><h3><i class="fas fa-trash"></i> Delete Recipient</h3></div>' +
+                    '<div class="form-group"><label>FIND RECIPIENT TO DELETE</label><div style="display:flex; gap:10px;"><input type="text" class="form-control" id="del-r-search" placeholder="Enter exact name..." style="flex:1;"><button class="btn-submit" style="margin-top:0;" onclick="FormHandlers.findDeleteRecipient()">Find</button></div></div>' +
+                    '<div id="del-r-error" style="color:var(--primary-red); margin-top:10px; display:none;">Recipient not found.</div>' +
+                    '<div id="del-r-container" style="display:none; margin-top:30px; border-top:1px solid var(--border-color); padding-top:30px;"></div></div>';
+            },
+
+            // --- Inventory & Intelligence ---
+            'request-blood': function () {
+                return '<div class="form-card" style="max-width: 600px;"><div class="form-header"><h3><i class="fas fa-tint"></i> Request Blood</h3><p>Process a blood request. Checks compatibility and deducts from stock.</p></div>' +
+                    '<form id="frm-req-blood" onsubmit="FormHandlers.requestBlood(event)">' +
+                    '<div class="form-group" style="margin-bottom:15px"><label>RECIPIENT NAME</label><input type="text" class="form-control" id="req-name" required></div>' +
+                    '<div class="form-group" style="margin-bottom:15px"><label>BLOOD GROUP REQUIRED</label><select class="form-control" id="req-blood" required><option value="">-- Select --</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select></div>' +
+                    '<div class="form-group" style="margin-bottom:20px"><label>QUANTITY (ML)</label><input type="number" class="form-control" id="req-qty" required></div>' +
+                    '<button type="submit" class="btn-submit"><i class="fas fa-check"></i> Process Request</button>' +
+                    '</form><div id="req-msg" style="margin-top:15px; font-weight:bold;"></div></div>';
+            },
+            'view-stock': function () {
+                const stock = AppState.getStock();
+                const groups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+                let grid = groups.map(function (g) { return '<div class="stock-card"><div class="b-type">' + g + '</div><div class="b-qty">' + stock[g] + ' <span>ml</span></div></div>'; }).join('');
+                return '<div class="form-card" style="max-width:100%"><div class="form-header"><h3><i class="fas fa-box"></i> Live Blood Stock</h3></div><div class="stock-grid">' + grid + '</div></div>';
+            },
+            'search-blood': function () {
+                return '<div class="form-card" style="max-width:600px"><div class="form-header"><h3><i class="fas fa-search"></i> Search Inventory</h3></div>' +
+                    '<div class="form-group"><select class="form-control" onchange="FormHandlers.searchStock(this.value)"><option value="">-- Select Blood Group --</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select></div>' +
+                    '<div id="stock-res" style="margin-top:20px; font-size:1.2rem; font-weight:bold; color:var(--primary-red)"></div></div>';
+            },
+            'compatibility': function () {
+                return '<div class="form-card"><div class="form-header"><h3><i class="fas fa-microscope"></i> Compatibility Engine</h3></div><p style="color:var(--text-muted); margin-bottom:20px;">Checks donor and recipient compatibility.</p>' +
+                    '<div style="display:flex; gap:20px; margin-bottom:20px;"><select class="form-control" id="comp-d" style="flex:1"><option value="">-- Donor Blood --</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select><select class="form-control" id="comp-r" style="flex:1"><option value="">-- Recipient Blood --</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select></div>' +
+                    '<button class="btn-submit" onclick="FormHandlers.checkComp()" style="margin-top:0"><i class="fas fa-microscope"></i> Check</button><div id="comp-res" style="margin-top:15px; font-weight:bold;"></div>' +
+                    '<div style="margin-top:40px;"><div class="settings-section-title">FULL COMPATIBILITY MATRIX</div><div class="table-responsive"><table class="data-table compatibility-matrix"><thead><tr><th>DONOR ↓</th><th>A+</th><th>A-</th><th>B+</th><th>B-</th><th>AB+</th><th>AB-</th><th>O+</th><th>O-</th></tr></thead><tbody>' +
+                    '<tr><td>A+</td><td><i class="fas fa-check comp-check"></i></td><td></td><td></td><td></td><td><i class="fas fa-check comp-check"></i></td><td></td><td></td><td></td></tr>' +
+                    '<tr><td>A-</td><td><i class="fas fa-check comp-check"></i></td><td><i class="fas fa-check comp-check"></i></td><td></td><td></td><td><i class="fas fa-check comp-check"></i></td><td><i class="fas fa-check comp-check"></i></td><td></td><td></td></tr>' +
+                    '<tr><td>B+</td><td></td><td></td><td><i class="fas fa-check comp-check"></i></td><td></td><td><i class="fas fa-check comp-check"></i></td><td></td><td></td><td></td></tr>' +
+                    '<tr><td>B-</td><td></td><td></td><td><i class="fas fa-check comp-check"></i></td><td><i class="fas fa-check comp-check"></i></td><td><i class="fas fa-check comp-check"></i></td><td><i class="fas fa-check comp-check"></i></td><td></td><td></td></tr>' +
+                    '<tr><td>AB+</td><td></td><td></td><td></td><td></td><td><i class="fas fa-check comp-check"></i></td><td></td><td></td><td></td></tr>' +
+                    '<tr><td>AB-</td><td></td><td></td><td></td><td></td><td><i class="fas fa-check comp-check"></i></td><td><i class="fas fa-check comp-check"></i></td><td></td><td></td></tr>' +
+                    '<tr><td>O+</td><td><i class="fas fa-check comp-check"></i></td><td></td><td><i class="fas fa-check comp-check"></i></td><td></td><td><i class="fas fa-check comp-check"></i></td><td></td><td><i class="fas fa-check comp-check"></i></td><td></td></tr>' +
+                    '<tr><td>O-</td><td><i class="fas fa-check comp-check"></i></td><td><i class="fas fa-check comp-check"></i></td><td><i class="fas fa-check comp-check"></i></td><td><i class="fas fa-check comp-check"></i></td><td><i class="fas fa-check comp-check"></i></td><td><i class="fas fa-check comp-check"></i></td><td><i class="fas fa-check comp-check"></i></td><td><i class="fas fa-check comp-check"></i></td></tr>' +
+                    '</tbody></table></div></div></div>';
+            },
+            'transactions': function () {
+                let rows = AppState.transactions.length === 0 ? '<tr><td colspan="5" style="text-align:center">No transactions recorded</td></tr>' :
+                    AppState.transactions.map(function (t) { return '<tr><td><span style="color:' + (t.type === 'Donation' ? 'var(--green-online)' : '#e74c3c') + '">' + t.type + '</span></td><td>' + t.name + '</td><td>' + t.blood + '</td><td>' + t.quantity + ' ml</td><td>' + new Date(t.date).toLocaleString() + '</td></tr>'; }).join('');
+                return '<div class="form-card" style="max-width:100%"><div class="form-header"><h3><i class="fas fa-file-invoice"></i> System Transactions</h3></div><div class="table-responsive"><table class="data-table"><thead><tr><th>Type</th><th>Name</th><th>Blood</th><th>Quantity</th><th>Date</th></tr></thead>' +
+                    '<tbody>' + rows + '</tbody></table></div></div>';
+            },
+            'settings': function () {
+                return '<div class="form-card"><div class="form-header"><h3><i class="fas fa-cog"></i> System Settings</h3></div>' +
+                    '<div class="settings-section"><div class="settings-section-title">DATA PERSISTENCE</div><p style="color:var(--text-muted); margin-bottom:20px;">All data is automatically saved to LocalStorage.</p><div class="alert-box"><i class="fas fa-save"></i><div><h4>Auto-Save Active</h4><p style="color:var(--text-muted); font-size:0.85rem">Every change is saved instantly.</p></div></div></div>' +
+                    '<div class="settings-section"><div class="danger-zone"><div class="danger-zone-title"><i class="fas fa-exclamation-triangle"></i> DANGER ZONE</div><p style="color:var(--text-muted); margin-bottom:20px;">This permanently deletes ALL donors, recipients, and transactions.</p><button class="btn-danger" onclick="AppState.deleteAll()"><i class="fas fa-trash"></i> Delete All Data</button></div></div></div>';
+            }
+        };
+
+        const FormHandlers = {
+            addDonor: function (e) {
+                e.preventDefault();
+                const donor = {
+                    name: document.getElementById('d-name').value, age: document.getElementById('d-age').value,
+                    contact: document.getElementById('d-contact').value, blood: document.getElementById('d-blood').value,
+                    quantity: document.getElementById('d-qty').value, date: new Date().toISOString()
+                };
+                AppState.donors.push(donor);
+                AppState.transactions.push({ type: 'Donation', name: donor.name, blood: donor.blood, quantity: donor.quantity, date: donor.date });
+                AppState.save();
+                e.target.reset();
+                let msg = document.getElementById('donor-add-msg');
+                if (!msg) {
+                    msg = document.createElement('div');
+                    msg.id = 'donor-add-msg';
+                    msg.style = 'color:var(--green-online); margin-top:15px; font-weight:bold;';
+                    e.target.appendChild(msg);
+                }
+                msg.innerHTML = '<i class="fas fa-check-circle"></i> Donor successfully registered!';
+                setTimeout(() => msg.innerHTML = '', 3000);
+            },
+            searchDonor: function () {
+                const q = document.getElementById('search-d-input').value.toLowerCase();
+                const res = AppState.donors.filter(function (d) { return d.name.toLowerCase().includes(q) || d.blood.toLowerCase().includes(q); });
+                document.querySelector('#search-d-results tbody').innerHTML = res.map(function (d) { return '<tr><td>' + d.name + '</td><td>' + d.contact + '</td><td style="color:var(--primary-red)">' + d.blood + '</td></tr>'; }).join('');
+            },
+
+            findUpdateDonor: function () {
+                const name = document.getElementById('ud-search').value.toLowerCase();
+                const matches = AppState.donors.map((d, i) => ({ d, i })).filter(x => x.d.name.toLowerCase() === name);
+                const err = document.getElementById('ud-error');
+                const cont = document.getElementById('ud-form-container');
+                if (matches.length > 0) {
+                    err.style.display = 'none';
+                    let html = '<p style="margin-bottom:20px; color:var(--text-main);">Select donor to update:</p>';
+                    html += '<select id="ud-select" class="form-control" style="margin-bottom:20px" onchange="FormHandlers.onSelectUpdateDonor(this.value)">';
+                    html += '<option value="">-- Select --</option>';
+                    matches.forEach(m => { html += '<option value="' + m.i + '">' + m.d.name + ' - Age: ' + m.d.age + ' - Blood: ' + m.d.blood + '</option>'; });
+                    html += '</select>';
+                    html += '<div id="ud-fields" style="display:none">';
+                    html += '<form id="frm-update-donor" onsubmit="FormHandlers.submitUpdateDonor(event)">';
+                    html += '<div class="form-group" style="margin-bottom:15px"><label>CONTACT</label><input type="text" class="form-control" id="ud-contact" required></div>';
+                    html += '<div class="form-group" style="margin-bottom:15px"><label>AGE</label><input type="number" class="form-control" id="ud-age" required></div>';
+                    html += '<button type="submit" class="btn-submit"><i class="fas fa-save"></i> Save Changes</button>';
+                    html += '</form></div>';
+                    cont.innerHTML = html;
+                    cont.style.display = 'block';
+                } else {
+                    err.style.display = 'block'; cont.style.display = 'none';
+                }
+            },
+            onSelectUpdateDonor: function (val) {
+                const flds = document.getElementById('ud-fields');
+                if (val === "") { flds.style.display = 'none'; return; }
+                const idx = parseInt(val);
+                document.getElementById('ud-contact').value = AppState.donors[idx].contact;
+                document.getElementById('ud-age').value = AppState.donors[idx].age;
+                flds.style.display = 'block';
+            },
+            submitUpdateDonor: function (e) {
+                e.preventDefault();
+                const select = document.getElementById('ud-select');
+                if (select && select.value !== "") {
+                    const idx = parseInt(select.value);
+                    AppState.donors[idx].contact = document.getElementById('ud-contact').value;
+                    AppState.donors[idx].age = document.getElementById('ud-age').value;
+                    AppState.save();
+                    const cont = document.getElementById('ud-form-container');
+                    cont.innerHTML = '<div style="color:var(--green-online); font-weight:bold; margin-top:20px;"><i class="fas fa-check-circle"></i> Donor updated successfully!</div>';
+                }
+            },
+
+            findDeleteDonor: function () {
+                const name = document.getElementById('del-d-search').value.toLowerCase();
+                const matches = AppState.donors.map((d, i) => ({ d, i })).filter(x => x.d.name.toLowerCase() === name);
+                const err = document.getElementById('del-d-error');
+                const cont = document.getElementById('del-d-container');
+                if (matches.length > 0) {
+                    err.style.display = 'none';
+                    let html = '<p style="margin-bottom:20px; color:var(--text-main);">Select donor to delete:</p>';
+                    html += '<select id="del-d-select" class="form-control" style="margin-bottom:20px">';
+                    matches.forEach(m => { html += '<option value="' + m.i + '">' + m.d.name + ' - Age: ' + m.d.age + ' - Blood: ' + m.d.blood + '</option>'; });
+                    html += '</select>';
+                    html += '<button class="btn-danger" onclick="FormHandlers.submitDeleteDonor()"><i class="fas fa-trash"></i> Confirm Delete</button>';
+                    cont.innerHTML = html;
+                    cont.style.display = 'block';
+                } else {
+                    err.style.display = 'block'; cont.style.display = 'none';
+                }
+            },
+            submitDeleteDonor: function () {
+                const select = document.getElementById('del-d-select');
+                if (select) {
+                    const idx = parseInt(select.value);
+                    AppState.donors.splice(idx, 1);
+                    AppState.save();
+                    const cont = document.getElementById('del-d-container');
+                    cont.innerHTML = '<div style="color:var(--green-online); font-weight:bold; margin-top:20px;"><i class="fas fa-check-circle"></i> Donor deleted successfully!</div>';
+                }
+            },
+
+            addRecipient: function (e) {
+                e.preventDefault();
+                AppState.recipients.push({
+                    name: document.getElementById('r-name').value, age: document.getElementById('r-age').value,
+                    contact: document.getElementById('r-contact').value,
+                    blood: document.getElementById('r-blood').value, urgency: document.getElementById('r-urgency').value,
+                    date: new Date().toISOString()
+                });
+                AppState.save();
+                e.target.reset();
+                updateUrgencyUI(1);
+                let msg = document.getElementById('recipient-add-msg');
+                if (!msg) {
+                    msg = document.createElement('div');
+                    msg.id = 'recipient-add-msg';
+                    msg.style = 'color:var(--green-online); margin-top:15px; font-weight:bold;';
+                    e.target.appendChild(msg);
+                }
+                msg.innerHTML = '<i class="fas fa-check-circle"></i> Recipient successfully registered!';
+                setTimeout(() => msg.innerHTML = '', 3000);
+            },
+            searchRecipient: function () {
+                const q = document.getElementById('search-r-input').value.toLowerCase();
+                const res = AppState.recipients.filter(function (r) { return r.name.toLowerCase().includes(q); });
+                document.querySelector('#search-r-results tbody').innerHTML = res.map(function (r) { return '<tr><td>' + r.name + '</td><td>' + r.age + '</td><td>' + (r.contact || '-') + '</td><td style="color:var(--primary-red)">' + r.blood + '</td></tr>'; }).join('');
+            },
+
+            findUpdateRecipient: function () {
+                const name = document.getElementById('ur-search').value.toLowerCase();
+                const matches = AppState.recipients.map((r, i) => ({ r, i })).filter(x => x.r.name.toLowerCase() === name);
+                const err = document.getElementById('ur-error');
+                const cont = document.getElementById('ur-form-container');
+                if (matches.length > 0) {
+                    err.style.display = 'none';
+                    let html = '<p style="margin-bottom:20px; color:var(--text-main);">Select recipient to update:</p>';
+                    html += '<select id="ur-select" class="form-control" style="margin-bottom:20px" onchange="FormHandlers.onSelectUpdateRecipient(this.value)">';
+                    html += '<option value="">-- Select --</option>';
+                    matches.forEach(m => { html += '<option value="' + m.i + '">' + m.r.name + ' - Age: ' + m.r.age + ' - Blood: ' + m.r.blood + '</option>'; });
+                    html += '</select>';
+                    html += '<div id="ur-fields" style="display:none">';
+                    html += '<form id="frm-update-recipient" onsubmit="FormHandlers.submitUpdateRecipient(event)">';
+                    html += '<div class="form-group" style="margin-bottom:15px"><label>AGE</label><input type="number" class="form-control" id="ur-age" required></div>';
+                    html += '<div class="form-group" style="margin-bottom:15px"><label>CONTACT</label><input type="text" class="form-control" id="ur-contact" required></div>';
+                    html += '<div class="form-group full-width" style="margin-top:10px;"><label>URGENCY LEVEL</label>';
+                    html += '<div style="display:flex; align-items:center; gap:20px;">';
+                    html += '<input type="range" class="form-control" id="ur-urgency" min="1" max="5" value="1" oninput="updateUrgencyUI(this.value)" style="flex:1; padding:0; border:none; background:transparent;">';
+                    html += '<div id="urgency-badge" style="padding:8px 15px; border-radius:20px; font-weight:bold; font-size:0.9rem; min-width:130px; text-align:center;" class="urgency-1">1 — Low</div>';
+                    html += '</div></div>';
+                    html += '<button type="submit" class="btn-submit" style="margin-top:20px;"><i class="fas fa-save"></i> Save Changes</button>';
+                    html += '</form></div>';
+                    cont.innerHTML = html;
+                    cont.style.display = 'block';
+                } else {
+                    err.style.display = 'block'; cont.style.display = 'none';
+                }
+            },
+            onSelectUpdateRecipient: function (val) {
+                const flds = document.getElementById('ur-fields');
+                if (val === "") { flds.style.display = 'none'; return; }
+                const idx = parseInt(val);
+                document.getElementById('ur-age').value = AppState.recipients[idx].age;
+                document.getElementById('ur-contact').value = AppState.recipients[idx].contact || '';
+                document.getElementById('ur-urgency').value = AppState.recipients[idx].urgency;
+                updateUrgencyUI(AppState.recipients[idx].urgency);
+                flds.style.display = 'block';
+            },
+            submitUpdateRecipient: function (e) {
+                e.preventDefault();
+                const select = document.getElementById('ur-select');
+                if (select && select.value !== "") {
+                    const idx = parseInt(select.value);
+                    AppState.recipients[idx].age = document.getElementById('ur-age').value;
+                    AppState.recipients[idx].contact = document.getElementById('ur-contact').value;
+                    AppState.recipients[idx].urgency = document.getElementById('ur-urgency').value;
+                    AppState.save();
+                    const cont = document.getElementById('ur-form-container');
+                    cont.innerHTML = '<div style="color:var(--green-online); font-weight:bold; margin-top:20px;"><i class="fas fa-check-circle"></i> Recipient updated successfully!</div>';
+                }
+            },
+
+            findDeleteRecipient: function () {
+                const name = document.getElementById('del-r-search').value.toLowerCase();
+                const matches = AppState.recipients.map((r, i) => ({ r, i })).filter(x => x.r.name.toLowerCase() === name);
+                const err = document.getElementById('del-r-error');
+                const cont = document.getElementById('del-r-container');
+                if (matches.length > 0) {
+                    err.style.display = 'none';
+                    let html = '<p style="margin-bottom:20px; color:var(--text-main);">Select recipient to delete:</p>';
+                    html += '<select id="del-r-select" class="form-control" style="margin-bottom:20px">';
+                    matches.forEach(m => { html += '<option value="' + m.i + '">' + m.r.name + ' - Age: ' + m.r.age + ' - Blood: ' + m.r.blood + '</option>'; });
+                    html += '</select>';
+                    html += '<button class="btn-danger" onclick="FormHandlers.submitDeleteRecipient()"><i class="fas fa-trash"></i> Confirm Delete</button>';
+                    cont.innerHTML = html;
+                    cont.style.display = 'block';
+                } else {
+                    err.style.display = 'block'; cont.style.display = 'none';
+                }
+            },
+            submitDeleteRecipient: function () {
+                const select = document.getElementById('del-r-select');
+                if (select) {
+                    const idx = parseInt(select.value);
+                    AppState.recipients.splice(idx, 1);
+                    AppState.save();
+                    const cont = document.getElementById('del-r-container');
+                    cont.innerHTML = '<div style="color:var(--green-online); font-weight:bold; margin-top:20px;"><i class="fas fa-check-circle"></i> Recipient deleted successfully!</div>';
+                }
+            },
+
+            requestBlood: function (e) {
+                e.preventDefault();
+                const name = document.getElementById('req-name').value;
+                const blood = document.getElementById('req-blood').value;
+                const qty = Number(document.getElementById('req-qty').value);
+
+                const stock = AppState.getStock();
+                const msg = document.getElementById('req-msg');
+
+                if (stock[blood] >= qty) {
+                    AppState.transactions.push({ type: 'Request', name: name, blood: blood, quantity: qty, date: new Date().toISOString() });
+                    AppState.save();
+                    msg.innerHTML = '<span style="color:var(--green-online)"><i class="fas fa-check-circle"></i> Request fulfilled! ' + qty + 'ml of ' + blood + ' issued to ' + name + '.</span>';
+                    document.getElementById('frm-req-blood').reset();
+                } else {
+                    msg.innerHTML = '<span style="color:var(--primary-red)"><i class="fas fa-times-circle"></i> Insufficient stock for ' + blood + '. Available: ' + stock[blood] + 'ml.</span>';
+                }
+            },
+
+            searchStock: function (blood) {
+                const res = document.getElementById('stock-res');
+                if (!blood) { res.innerHTML = ''; return; }
+                const stock = AppState.getStock();
+                res.innerHTML = '<i class="fas fa-tint"></i> Current stock for ' + blood + ': ' + stock[blood] + ' ml';
+            },
+
+            checkComp: function () {
+                const d = document.getElementById('comp-d').value;
+                const r = document.getElementById('comp-r').value;
+                const res = document.getElementById('comp-res');
+                if (!d || !r) return res.innerHTML = '';
+                const m = {
+                    'A+': ['A+', 'AB+'], 'A-': ['A+', 'A-', 'AB+', 'AB-'],
+                    'B+': ['B+', 'AB+'], 'B-': ['B+', 'B-', 'AB+', 'AB-'],
+                    'AB+': ['AB+'], 'AB-': ['AB+', 'AB-'],
+                    'O+': ['A+', 'B+', 'AB+', 'O+'], 'O-': ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
+                };
+                if (m[d].includes(r)) res.innerHTML = '<span style="color:var(--green-online)">Compatible! ' + d + ' can donate to ' + r + '.</span>';
+                else res.innerHTML = '<span style="color:var(--primary-red)">Incompatible! ' + d + ' cannot donate to ' + r + '.</span>';
+            }
+        };
+
+        const Router = {
+            navigate: function (target, title, subtitle) {
+                document.querySelectorAll('.nav-link').forEach(function (l) { l.classList.remove('active'); });
+                const link = document.querySelector('.nav-link[onclick*="' + target + '"]');
+                if (link) link.classList.add('active');
+
+                document.getElementById('page-title').textContent = title;
+                document.getElementById('page-subtitle').textContent = subtitle;
+
+                const container = document.getElementById('app-views');
+                if (Views[target]) {
+                    container.innerHTML = Views[target]();
+                }
+            }
+        };
+
+        // === Particle Animation ===
+        const canvas = document.getElementById('particle-canvas');
+        if (canvas) {
+            const ctx = canvas.getContext('2d');
+            let bloodCells = [];
+            let time = 0;
+
+            function resize() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                initCells();
+            }
+
+            function initCells() {
+                bloodCells = [];
+                let area = canvas.width * canvas.height;
+                let count = Math.floor(area / 14000);
+                for (let i = 0; i < count; i++) {
+                    bloodCells.push({
+                        x: Math.random() * canvas.width,
+                        y: Math.random() * canvas.height,
+                        vx: (Math.random() - 0.5) * 0.5,
+                        vy: (Math.random() - 0.5) * 0.5,
+                        radius: Math.random() * 4 + 4,
+                        opacityBase: Math.random() * 0.4 + 0.1,
+                        opacityPhase: Math.random() * Math.PI * 2,
+                        angle: Math.random() * Math.PI * 2,
+                        spin: (Math.random() - 0.5) * 0.02
+                    });
+                }
+            }
+
+            window.addEventListener('resize', resize);
+            resize();
+
+            function animate() {
+                // Dark black background with subtle radial glow top-left
+                ctx.fillStyle = '#050304';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                let gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, canvas.width * 0.6);
+                gradient.addColorStop(0, 'rgba(232, 25, 44, 0.1)');
+                gradient.addColorStop(1, 'transparent');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                time += 0.02;
+
+                // Draw Blood Cells
+                for (let i = 0; i < bloodCells.length; i++) {
+                    let cell = bloodCells[i];
+                    cell.x += cell.vx;
+                    cell.y += cell.vy;
+                    cell.angle += cell.spin;
+
+                    if (cell.x > canvas.width + cell.radius) cell.x = -cell.radius;
+                    else if (cell.x < -cell.radius) cell.x = canvas.width + cell.radius;
+                    if (cell.y > canvas.height + cell.radius) cell.y = -cell.radius;
+                    else if (cell.y < -cell.radius) cell.y = canvas.height + cell.radius;
+
+                    let op = cell.opacityBase + Math.sin(time + cell.opacityPhase) * 0.1;
+
+                    ctx.save();
+                    ctx.translate(cell.x, cell.y);
+                    ctx.rotate(cell.angle);
+
+                    // Biconcave shape (outer red, inner darker)
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, cell.radius, cell.radius * 0.8, 0, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(232, 25, 44, ${op})`;
+                    ctx.fill();
+
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, cell.radius * 0.5, cell.radius * 0.4, 0, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(232, 25, 44, ${op * 0.4})`;
+                    ctx.fill();
+
+                    ctx.restore();
+                }
+
+                // Draw DNA on right side
+                // 4 loops across full height.
+                let dnaX = canvas.width * 0.85;
+                let amplitude = 18;
+                let freq = (8 * Math.PI) / canvas.height;
+                let spacing = 18;
+                let numRungs = Math.floor(canvas.height / spacing) + 2;
+
+                ctx.lineWidth = 1.5;
+                ctx.shadowBlur = 0; // Removing the massive blur for performance and subtleness
+
+                for (let i = -1; i < numRungs; i++) {
+                    let y = (i * spacing + time * 20) % (canvas.height + spacing);
+                    if (y < 0) y += canvas.height + spacing;
+
+                    let x1 = dnaX + Math.sin(y * freq) * amplitude;
+                    let x2 = dnaX + Math.sin(y * freq + Math.PI) * amplitude;
+
+                    // Connection rung
+                    ctx.beginPath();
+                    ctx.moveTo(x1, y);
+                    ctx.lineTo(x2, y);
+                    ctx.strokeStyle = 'rgba(232, 25, 44, 0.3)';
+                    ctx.stroke();
+
+                    // Dots at ends
+                    ctx.beginPath();
+                    ctx.arc(x1, y, 2, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(232, 25, 44, 0.7)';
+                    ctx.fill();
+
+                    ctx.beginPath();
+                    ctx.arc(x2, y, 2, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(232, 25, 44, 0.7)';
+                    ctx.fill();
+                }
+
+                requestAnimationFrame(animate);
+            }
+            animate();
+        }
+
+        // Init App
+        try {
+            if (AppState.donors.length === 0 && AppState.recipients.length === 0) {
+                if (!localStorage.getItem('donorDeck_demo_initialized')) {
+                    AppState.donors = [
+                        { name: "Ahmed Khan", age: "28", contact: "03001234567", blood: "O+", quantity: "450", date: new Date().toISOString() },
+                        { name: "Fatima Ali", age: "24", contact: "03009876543", blood: "A-", quantity: "350", date: new Date().toISOString() },
+                        { name: "Bilal Ahmed", age: "35", contact: "03111223344", blood: "B+", quantity: "500", date: new Date().toISOString() },
+                        { name: "Sara Khan", age: "22", contact: "03334567890", blood: "AB+", quantity: "400", date: new Date().toISOString() },
+                        { name: "Usman Malik", age: "29", contact: "03005556677", blood: "O-", quantity: "450", date: new Date().toISOString() },
+                        { name: "Ayesha Noor", age: "26", contact: "03456789012", blood: "A+", quantity: "380", date: new Date().toISOString() },
+                        { name: "Hassan Raza", age: "31", contact: "03219876543", blood: "B-", quantity: "420", date: new Date().toISOString() },
+                        { name: "Maryam Siddiqui", age: "27", contact: "03098765432", blood: "O+", quantity: "460", date: new Date().toISOString() },
+                        { name: "Zain Abbas", age: "33", contact: "03123456789", blood: "AB-", quantity: "390", date: new Date().toISOString() },
+                        { name: "Hira Khan", age: "25", contact: "03335678901", blood: "A+", quantity: "430", date: new Date().toISOString() }
+                    ];
+
+                    AppState.recipients = [
+                        { name: "Ali Hassan", age: "45", contact: "03007654321", blood: "O-", urgency: "5", date: new Date().toISOString() },
+                        { name: "Bushra Ahmed", age: "19", contact: "03114567890", blood: "A+", urgency: "4", date: new Date().toISOString() },
+                        { name: "Fahad Malik", age: "38", contact: "03023456789", blood: "B+", urgency: "3", date: new Date().toISOString() },
+                        { name: "Sana Raza", age: "28", contact: "03336789012", blood: "AB+", urgency: "4", date: new Date().toISOString() },
+                        { name: "Imran Khan", age: "52", contact: "03451234567", blood: "O+", urgency: "5", date: new Date().toISOString() },
+                        { name: "Nimra Javed", age: "23", contact: "03098765432", blood: "A-", urgency: "1", date: new Date().toISOString() },
+                        { name: "Omar Farooq", age: "41", contact: "03117654321", blood: "B-", urgency: "4", date: new Date().toISOString() },
+                        { name: "Rabia Sultan", age: "30", contact: "03219876543", blood: "O+", urgency: "3", date: new Date().toISOString() },
+                        { name: "Danish Iqbal", age: "35", contact: "03334567890", blood: "AB-", urgency: "5", date: new Date().toISOString() },
+                        { name: "Laiba Shah", age: "24", contact: "03005556677", blood: "A+", urgency: "4", date: new Date().toISOString() }
+                    ];
+
+                    AppState.transactions = AppState.donors.map(d => ({
+                        type: 'Donation', name: d.name, blood: d.blood, quantity: d.quantity, date: d.date
+                    }));
+
+                    localStorage.setItem('donorDeck_demo_initialized', 'true');
+                    AppState.save();
+                }
+            }
+
+            updateUIStats();
+            Router.navigate('dashboard', 'DASHBOARD', 'Emergency blood bank overview');
+        } catch (e) {
+            console.error("Initialization error:", e);
+        }
+    </script>
+    <div style="position: fixed; bottom: 15px; right: 20px; font-size: 0.75rem; color: rgba(255,255,255,0.4); z-index: 9999; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; pointer-events: none;">Demo Version</div>
+</body>
+
+</html>
